@@ -2,3 +2,6 @@
 *.pem
 *__pycache__*
 *.env
+build
+*egg-info*
+.vscode
