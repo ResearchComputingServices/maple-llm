@@ -75,12 +75,117 @@ def capabilities():
         'endpoints': {
             'generate': [
                 'prompt', 
-                'max_tokens']
-            }
+                'max_tokens'],
+            
+        "article_summary": [
+            'articles',
+            'max_tokens',
+        ]
+            },
     })
     log.debug(response)
     return response
 
+@require_api_key
+def article_summary(*args, **kwargs):
+    """
+    Generates a summary of the provided articles.
+    Returns:
+    - A JSON response containing the generated summary.
+    Raises:
+    - 400 error if any required fields are missing in the data.
+    - 500 error if there is an error generating the summary.
+    """
+    
+    data = request.json
+    log.debug(f"Got request: {data}")
+    required_fields = ['articles', 'model_type', 'prompt']
+    optional_fields = ['max_tokens']
+    if not all(field in data for field in required_fields):
+        missing_fiels = [field for field in required_fields if field not in data]
+        abort(400, f"Missing fields: {missing_fiels}")
+    if 'max_tokens' not in data:
+        data['max_tokens'] = 512
+    try:
+        response = app.config['models'].article_summary(
+            model_type=data['model_type'],
+            articles=data['articles'],
+            max_tokens=data['max_tokens'],
+            prompt=data['prompt']
+            )
+        log.debug(f"Response for summary_article: {response}")
+        return jsonify(response)
+    
+    except Exception as e:
+        log.error(f"Error generating response: {e}")
+        abort(500)
+
+@require_api_key
+def topic_name():
+    """
+    Generates a topic name given a list of keywords.
+    Returns:
+    - A JSON response containing the generated summary.
+    Raises:
+    - 400 error if any required fields are missing in the data.
+    - 500 error if there is an error generating the summary.
+    """
+    
+    data = request.json
+    log.debug(f"Got request: {data}")
+    required_fields = ['keywords', 'model_type', 'prompt']
+    
+    if not all(field in data for field in required_fields):
+        missing_fiels = [field for field in required_fields if field not in data]
+        abort(400, f"Missing fields: {missing_fiels}")
+    
+    try:
+        response = app.config['models'].topic_name(
+            model_type=data['model_type'],
+            keywords=data['keywords'],
+            prompt=data['prompt']
+            )
+        return jsonify(response)
+    
+    except Exception as e:
+        log.error(f"Error generating response: {e}")
+        abort(500)
+
+
+@require_api_key
+def bullet_point():
+    """
+    Generates a bullet point summary for given a list of articles.
+    Returns:
+    - A JSON response containing the generated summaries.
+    Raises:
+    - 400 error if any required fields are missing in the data.
+    - 500 error if there is an error generating the summary.
+    """
+    
+    data = request.json
+    log.debug(f"Got request: {data}")
+    required_fields = ['articles', 'model_type', 'prompt']
+    
+    if not all(field in data for field in required_fields):
+        missing_fiels = [field for field in required_fields if field not in data]
+        abort(400, f"Missing fields: {missing_fiels}")
+    if 'max_tokens' not in data:
+        data['max_tokens'] = 512
+    
+    try:
+        response = app.config['models'].bullet_point_summary(
+            model_type=data['model_type'],
+            articles=data['articles'],
+            prompt=data['prompt'],
+            max_tokens=data['max_tokens']
+            )
+        return jsonify(response)
+    
+    except Exception as e:
+        log.error(f"Error generating response: {e}")
+        abort(500)
+        
 def favicon(): 
     log.debug("Requested favicon")
     return send_from_directory(
@@ -112,9 +217,13 @@ def register_urls(app):
     app.add_url_rule('/', view_func=main_page, methods=['GET'])
     app.add_url_rule('/llm', view_func=main_page, methods=['GET'])
     app.add_url_rule('/favicon.ico', view_func=favicon, methods=['GET'])
-
-def create_app(models: MLModel | None = None):
+    app.add_url_rule('/llm/article_summary', view_func=article_summary, methods=['POST'])
+    app.add_url_rule('/llm/topic_name', view_func=topic_name, methods=['POST'])
+    app.add_url_rule('/llm/bullet_point', view_func=bullet_point, methods=['POST'])
     
+def create_app(models: MLModel | None = None):
+    log.debug("Creating app")
+    log.debug(f"Models: {models}")
     if models is None:
         app.config['models'] = MLModel(
             load_default=True,

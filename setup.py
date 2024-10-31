@@ -20,5 +20,6 @@ setup(
         'python-dotenv',
         'coloredlogs',
         'cryptography',
+        'pyopenssl',
     ],
 )

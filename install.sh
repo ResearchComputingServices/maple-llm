@@ -75,9 +75,14 @@ server {
     ssl_certificate_key $SSLKEY;
 
     server_name _;
-
+    
     location / {
         proxy_pass https://localhost:$PORT;
+        
+        proxy_connect_timeout 1200s;
+        proxy_send_timeout 1200s;
+        proxy_read_timeout 1200s;
+        send_timeout 1200s;
     }
 } 
 EOL
