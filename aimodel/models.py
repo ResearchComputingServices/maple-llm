@@ -217,9 +217,9 @@ class GPT4AllModel(BaseModel):
                 return self.model
             log.info(f"Loading GPT4All model")
             self.model = GPT4All(
-                "Meta-Llama-3-8B-Instruct.Q4_0.gguf",
+                'GPT4All-Community/Meta-Llama-3.1-8B-Instruct-128k-GGUF', #"Meta-Llama-3-8B-Instruct.Q4_0.gguf",
                 device=self._device,
-                n_ctx=4096,
+                n_ctx=8192, #4096
             )
             return self.model
 
@@ -455,7 +455,13 @@ class MistralModel(BaseModel):
             prompts=[final_prompt],
             max_tokens=max_tokens,
         )
-        return response
+        # if numbered points
+        bullet_points = re.split(r'\s(?=\d[\.\-\)\#])', response[0])
+        
+        if len(bullet_points) == 1:
+            bullet_points = re.split(r'\s(?=[\*\-])', response[0])
+            
+        return bullet_points
 
 
 class MLModel:
